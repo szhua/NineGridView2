@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+ <declare-styleable name="NineGridView">
+
+   <attr name="imgmargin" format="dimension|float"></attr>
+   <attr name="four_picture_style" format="integer|dimension"></attr>
+   <attr name="one_picture_style" format="integer|dimension"></attr>
+   <attr name="one_picture_fixed_size" format="dimension|integer"></attr>
+
+
+ </declare-styleable>
+
+</resources>
