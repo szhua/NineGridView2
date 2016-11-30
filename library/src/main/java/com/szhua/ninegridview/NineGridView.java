@@ -31,7 +31,7 @@ public class NineGridView<T> extends ViewGroup {
     /**
      * 一个图片默认的图片大小
      */
-    private final int DEFAULT_ONE_PIC_FIXED_SIZE =200 ;
+    private final int DEFAULT_ONE_PIC_FIXED_SIZE =300 ;
 
     /**
      * 图片间距
@@ -78,7 +78,7 @@ public class NineGridView<T> extends ViewGroup {
      * 图片缓存类;节省内存；(创建Imageview控件是一个特别浪费内存的事情)
      */
     private ArrayList<ImageView> imageViewCache  =new ArrayList<ImageView>();
-
+    private int  width;
 
 
     public NineGridView(Context context) {
@@ -95,32 +95,31 @@ public class NineGridView<T> extends ViewGroup {
     }
 
 
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int width =MeasureSpec.getSize(widthMeasureSpec) ;
+         width =MeasureSpec.getSize(widthMeasureSpec) ;
 
         int widthForNineGrid =width-getPaddingLeft()-getPaddingRight();
         int height =0 ;
+
+        /**
+         * 每个imageView的size ==
+         */
+        singleImageViewSize = (int) ((widthForNineGrid-imageMargin*2)/3);
         /**
          * 只有一张图片的时候；
          */
-        if(imageDatas!=null&&imageDatas.size()==1){
+        if(imageDatas!=null&&imageDatas.size()==1&&one_pic_style==Constant.ONE_PIC_STYLE_FIXED){
             /**
              * 图片固定大小的模式 ；
              */
-            if(one_pic_style==Constant.ONE_PIC_STYLE_FIXED){
-                height =onePicFixedSize+getPaddingLeft()*2;
-            }
+          height =onePicFixedSize+getPaddingLeft()*2;
         }else{
-            /**
-             * 每个imageView的size ==
-             */
-            singleImageViewSize = (int) ((widthForNineGrid-imageMargin*2)/3);
             height = (int) (coluum_count*singleImageViewSize+(coluum_count-1)*imageMargin)+getPaddingLeft()*2;
         }
         setMeasuredDimension(width,height);
-
     }
 
 
@@ -131,8 +130,6 @@ public class NineGridView<T> extends ViewGroup {
     public void setNineGridViewImageControl(NineGridViewImageControl<T> nineGridViewImageControl) {
         this.nineGridViewImageControl = nineGridViewImageControl;
     }
-
-
     /**
      * 初始化属性 ；
      * @param context
@@ -179,9 +176,7 @@ public class NineGridView<T> extends ViewGroup {
                 this.setVisibility(GONE);
             }else{
 
-
                 this.setVisibility(VISIBLE);
-
                 //若是图片的数量大于9的话，只取前9个数据 ；
                 if(imageDatas.size()>9){
                     imageDatas.subList(0,9);
@@ -191,16 +186,14 @@ public class NineGridView<T> extends ViewGroup {
                  calculateGridNumbers(imageDatas.size());
 
                  // 若是第一次添加数据
-                if(imageDatas==null){
+                if(this.imageDatas==null){
                     for (int i=0;i<imageDatas.size(); i++) {
-
                         //生成新的imageView；
                         ImageView imageView =generateImageView(i);
                         addView(imageView ,generateDefaultLayoutParams());
-                        imageViewCache.add(imageView);
                     }
                 }else{
-                    int oldImageSize =imageDatas.size();
+                    int oldImageSize =this.imageDatas.size();
                     int newImageSize =imageDatas.size();
                     /**
                      * 图片少的话 ;
@@ -210,7 +203,6 @@ public class NineGridView<T> extends ViewGroup {
                          * 得到减少的view，跟新数据，从viewGroup中去除 ；
                          */
                        removeViews(newImageSize,oldImageSize-newImageSize);
-
                         //使用removeview时候，当remove的时候子view的postion也发生了相应的改变，所以导致失败
                         // TODO: 2016/11/28   对于数组的操作，遍历不能删除，对其构造产生影响；
                     }
@@ -244,6 +236,7 @@ public class NineGridView<T> extends ViewGroup {
     public ImageView generateImageView(int position){
         ImageView imageView =null ;
 
+
         /*
          缓存有的话从缓存中获得;
          */
@@ -253,6 +246,9 @@ public class NineGridView<T> extends ViewGroup {
         }
          imageView =nineGridViewImageControl.generateImageView(getContext()) ;
 
+        /**
+         * 这个集合一直加数据，肯定不会让imageview重复而导致parent already exists的问题 ；
+         */
          imageViewCache.add(imageView) ;
 
          return  imageView ;
@@ -268,77 +264,63 @@ public class NineGridView<T> extends ViewGroup {
                    return;
                }
 
-                if(imageDatas.size()==1&&one_pic_style==Constant.ONE_PIC_STYLE_FIXED){
-                    ImageView imageView = (ImageView) getChildAt(0);
-                    int left =getPaddingLeft();
-                    int right =onePicFixedSize +left;
+               if(imageDatas.size()==1&&one_pic_style==DEFAULT_ONE_PIC_FIXED_SIZE){
+
+                   ImageView imageView = (ImageView) getChildAt(0);
+                   //为imageView设置数据 ;
+                   nineGridViewImageControl.displayImaView(imageView, imageDatas.get(0),1);
+                   //设置点击事件；
+                   nineGridViewImageControl.onImageViewClick(0, imageDatas.get(0));
+
+
+                    int  left =getPaddingLeft();
+                    int  right =onePicFixedSize +left;
                     int top = getPaddingLeft() ;
                     int bottom =top +onePicFixedSize ;
-                    imageView.layout(left,right,top,bottom);
-                    return;
-                }
+
+                   imageView.layout(left,top,right,bottom);
+                   return;
+               }
 
 
-            //遍历整个数据库，设置ImageView的位置；
-            for (int i =0;i<imageDatas.size(); i++) {
 
-            ImageView imageview = (ImageView) getChildAt(i);
+                    //遍历整个数据库，设置ImageView的位置；
+                    for (int i =0;i<imageDatas.size(); i++) {
 
-              //为imageView设置数据 ;
-              nineGridViewImageControl.displayImaView(imageview, imageDatas.get(i));
-              //设置点击事件；
-              nineGridViewImageControl.onImageViewClick(i, imageDatas.get(i));
+                        ImageView imageview = (ImageView) getChildAt(i);
 
-
-              //行
-              int rowIndex;
-              //列；
-              int columnIndex;
-
-              if (imageDatas.size() == 4 && four_pic_style == Constant.FOUR_PIC_STYLE_2_2_STYLE) {
-                  rowIndex = i / 2 + 1;
-                  columnIndex = i % 2 + 1;
-              } else {
-                  rowIndex = i / 3 + 1;
-                  columnIndex = i % 3 + 1;
-              }
+                        //为imageView设置数据 ;
+                        nineGridViewImageControl.displayImaView(imageview, imageDatas.get(i),imageDatas.size());
+                        //设置点击事件；
+                        nineGridViewImageControl.onImageViewClick(i, imageDatas.get(i));
 
 
-              int left = (int) ((columnIndex - 1) * singleImageViewSize + (columnIndex - 1) * imageMargin) + getPaddingLeft();
-              int right = left + singleImageViewSize;
-              int top = (int) ((rowIndex - 1) * singleImageViewSize + (rowIndex - 1) * imageMargin) + getPaddingLeft();
-              int bottom = top + singleImageViewSize;
+                        //行
+                        int rowIndex;
+                        //列；
+                        int columnIndex;
 
-              imageview.layout(left, top, right, bottom);
-          }
+                        if (imageDatas.size() == 4 && four_pic_style == Constant.FOUR_PIC_STYLE_2_2_STYLE) {
+                            rowIndex = i / 2 + 1;
+                            columnIndex = i % 2 + 1;
+                        } else {
+                            rowIndex = i / 3 + 1;
+                            columnIndex = i % 3 + 1;
+                        }
+
+
+                        int left = (int) ((columnIndex - 1) * singleImageViewSize + (columnIndex - 1) * imageMargin) + getPaddingLeft();
+                        int right = left + singleImageViewSize;
+                        int top = (int) ((rowIndex - 1) * singleImageViewSize + (rowIndex - 1) * imageMargin) + getPaddingLeft();
+                        int bottom = top + singleImageViewSize;
+
+                        imageview.layout(left, top, right, bottom);
+                    }
+
     }
 
 
 
-    /**
-     * 将dip或dp值转换为px值，保证尺寸大小不变
-     *
-     * @param dipValue
-     * @param context
-     * @return
-     */
-    public static int dip2px(Context context, float dipValue) {
-        /**
-         * 获得资源比例 ；（不同的手机这个比率可能会不一样）
-         */
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (dipValue * scale + 0.5f);
-    }
-    /**
-     * 将px值转换为dip或dp值，保证尺寸大小不变
-     *
-     * @param pxValue
-     * @return
-     */
-    public static int px2dip(Context context, float pxValue) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (pxValue / scale + 0.5f);
-    }
 
 
     /**

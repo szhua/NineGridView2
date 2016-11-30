@@ -13,25 +13,12 @@ import com.szhua.ninegridview.NineGridViewImageControl;
  */
 public class MyViewHolder extends RecyclerView.ViewHolder {
     public NineGridView nineGridView ;
+    public ImageView imageView ;
     public MyViewHolder(View itemView) {
         super(itemView);
         nineGridView = (NineGridView) itemView.findViewById(R.id.nine);
-        nineGridView.setNineGridViewImageControl(nineGridViewImageControl);
+        imageView = (ImageView) itemView.findViewById(R.id.imageView);
     }
 
 
-    NineGridViewImageControl<String> nineGridViewImageControl =new NineGridViewImageControl<String>() {
-        @Override
-        protected void displayImaView(ImageView imageView, String data) {
-
-        }
-        @Override
-        protected void onImageViewClick(int positon, String data) {
-
-        }
-        @Override
-        public ImageView generateImageView(Context context) {
-            return super.generateImageView(context);
-        }
-    } ;
 }
